@@ -3,6 +3,10 @@ import { ProvidersFactory, type ProviderCode } from '../langchain/providers.fact
 import { buildDocumentAgent, type DocumentAgent } from './document-agent';
 import type { DocumentAnalysis } from '../langchain/parsers/document-analysis.parser';
 import type { DocumentClassification } from './state';
+import {
+  buildTracingConfig,
+  type AnalysisTracingContext,
+} from '../langchain/tracing.helper';
 
 export interface AnalyzeWithGraphInput {
   providerCode: ProviderCode;
@@ -40,7 +44,10 @@ export class LangGraphService {
     this.agent = buildDocumentAgent();
   }
 
-  async analyze(input: AnalyzeWithGraphInput): Promise<AnalyzeWithGraphResult> {
+  async analyze(
+    input: AnalyzeWithGraphInput,
+    tracingContext?: AnalysisTracingContext,
+  ): Promise<AnalyzeWithGraphResult> {
     const { providerCode, model, format, filename, content } = input;
 
     const llm = this.providersFactory.createModel({
@@ -49,14 +56,19 @@ export class LangGraphService {
       streaming: false,
     });
 
+    const config = tracingContext ? buildTracingConfig(tracingContext) : undefined;
+
     const startedAt = new Date();
     try {
-      const finalState = await this.agent.invoke({
-        format,
-        filename,
-        content,
-        llm,
-      });
+      const finalState = await this.agent.invoke(
+        {
+          format,
+          filename,
+          content,
+          llm,
+        },
+        config,
+      );
       const finishedAt = new Date();
 
       this.logger.log(

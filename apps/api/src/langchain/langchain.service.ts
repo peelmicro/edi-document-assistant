@@ -6,6 +6,7 @@ import {
   documentAnalysisParser,
   type DocumentAnalysis,
 } from './parsers/document-analysis.parser';
+import { buildTracingConfig, type AnalysisTracingContext } from './tracing.helper';
 
 export type StreamEvent =
   | { type: 'token'; token: string }
@@ -47,7 +48,10 @@ export class LangChainService {
 
   constructor(private readonly providersFactory: ProvidersFactory) {}
 
-  async analyzeDocument(input: AnalyzeDocumentInput): Promise<AnalyzeDocumentResult> {
+  async analyzeDocument(
+    input: AnalyzeDocumentInput,
+    tracingContext?: AnalysisTracingContext,
+  ): Promise<AnalyzeDocumentResult> {
     const { providerCode, model, format, filename, content } = input;
 
     const llm = this.providersFactory.createModel({
@@ -73,15 +77,19 @@ export class LangChainService {
     ]);
 
     const formatInstructions = documentAnalysisParser.getFormatInstructions();
+    const config = tracingContext ? buildTracingConfig(tracingContext) : undefined;
 
     const startedAt = new Date();
     try {
-      const analysis = await chain.invoke({
-        format,
-        filename,
-        content,
-        format_instructions: formatInstructions,
-      });
+      const analysis = await chain.invoke(
+        {
+          format,
+          filename,
+          content,
+          format_instructions: formatInstructions,
+        },
+        config,
+      );
       const finishedAt = new Date();
 
       this.logger.log(
@@ -117,6 +125,7 @@ export class LangChainService {
   async *streamAnalyzeDocument(
     input: AnalyzeDocumentInput,
     abortSignal?: AbortSignal,
+    tracingContext?: AnalysisTracingContext,
   ): AsyncGenerator<StreamEvent> {
     const { providerCode, model, format, filename, content } = input;
 
@@ -138,7 +147,11 @@ export class LangChainService {
       });
 
       let rawResponse = '';
-      const stream = await llm.stream(promptValue, { signal: abortSignal });
+      const tracingConfig = tracingContext ? buildTracingConfig(tracingContext) : {};
+      const stream = await llm.stream(promptValue, {
+        ...tracingConfig,
+        signal: abortSignal,
+      });
 
       for await (const chunk of stream) {
         const token =

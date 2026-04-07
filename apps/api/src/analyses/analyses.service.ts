@@ -89,14 +89,26 @@ export class AnalysesService {
       let rawResponse: string;
       let finishedAt: Date;
 
+      const tracingContext = {
+        documentCode: document.code,
+        filename: document.filename,
+        format: document.format.code,
+        providerCode,
+        model,
+        mode: mode as 'chain' | 'graph',
+      };
+
       if (mode === 'graph') {
-        const graphResult = await this.langgraph.analyze({
-          providerCode,
-          model,
-          format: document.format.code,
-          filename: document.filename,
-          content,
-        });
+        const graphResult = await this.langgraph.analyze(
+          {
+            providerCode,
+            model,
+            format: document.format.code,
+            filename: document.filename,
+            content,
+          },
+          tracingContext,
+        );
         analysis = {
           ...graphResult.analysis,
           _graph: {
@@ -109,13 +121,16 @@ export class AnalysesService {
         rawResponse = graphResult.explainRawResponse;
         finishedAt = graphResult.finishedAt;
       } else {
-        const chainResult = await this.langchain.analyzeDocument({
-          providerCode,
-          model,
-          format: document.format.code,
-          filename: document.filename,
-          content,
-        });
+        const chainResult = await this.langchain.analyzeDocument(
+          {
+            providerCode,
+            model,
+            format: document.format.code,
+            filename: document.filename,
+            content,
+          },
+          tracingContext,
+        );
         analysis = chainResult.analysis;
         rawResponse = chainResult.rawResponse;
         finishedAt = chainResult.finishedAt;
@@ -237,6 +252,14 @@ export class AnalysesService {
           content,
         },
         abortSignal,
+        {
+          documentCode: document.code,
+          filename: document.filename,
+          format: document.format.code,
+          providerCode,
+          model,
+          mode: 'stream',
+        },
       )) {
         if (event.type === 'token') {
           yield { type: 'token', token: event.token };
