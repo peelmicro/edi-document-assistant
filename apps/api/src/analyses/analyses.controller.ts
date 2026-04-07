@@ -7,6 +7,7 @@ import type { ProviderCode } from '../langchain/providers.factory';
 interface AnalyzeBody {
   providerCode: ProviderCode;
   model: string;
+  mode?: 'chain' | 'graph';
 }
 
 @Controller('documents/:code/analyses')
@@ -24,6 +25,7 @@ export class AnalysesController {
       documentCode: code,
       providerCode: body.providerCode,
       model: body.model,
+      mode: body.mode,
     });
   }
 

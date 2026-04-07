@@ -2,12 +2,16 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { LangChainService, type StreamEvent } from '../langchain/langchain.service';
+import { LangGraphService } from '../langgraph/langgraph.service';
 import type { ProviderCode } from '../langchain/providers.factory';
+
+export type AnalysisMode = 'chain' | 'graph';
 
 export interface AnalyzeDocumentRequest {
   documentCode: string;
   providerCode: ProviderCode;
   model: string;
+  mode?: AnalysisMode;
 }
 
 /**
@@ -31,6 +35,7 @@ export class AnalysesService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly langchain: LangChainService,
+    private readonly langgraph: LangGraphService,
   ) {}
 
   /**
@@ -47,7 +52,7 @@ export class AnalysesService {
    * can later show why an analysis didn't complete.
    */
   async analyze(request: AnalyzeDocumentRequest) {
-    const { documentCode, providerCode, model } = request;
+    const { documentCode, providerCode, model, mode = 'chain' } = request;
 
     const document = await this.prisma.document.findUnique({
       where: { code: documentCode },
@@ -76,13 +81,45 @@ export class AnalysesService {
 
     const startedAt = new Date();
     try {
-      const { analysis, rawResponse, finishedAt } = await this.langchain.analyzeDocument({
-        providerCode,
-        model,
-        format: document.format.code,
-        filename: document.filename,
-        content,
-      });
+      // Both modes return the same { analysis, rawResponse, finishedAt }
+      // shape so the persistence logic below is mode-agnostic. The graph
+      // mode adds extra fields (classification, contentLength, etc.) which
+      // we fold into the persisted `result` JSON for traceability.
+      let analysis: object;
+      let rawResponse: string;
+      let finishedAt: Date;
+
+      if (mode === 'graph') {
+        const graphResult = await this.langgraph.analyze({
+          providerCode,
+          model,
+          format: document.format.code,
+          filename: document.filename,
+          content,
+        });
+        analysis = {
+          ...graphResult.analysis,
+          _graph: {
+            mode: 'graph',
+            classification: graphResult.classification,
+            contentLength: graphResult.contentLength,
+            segmentCount: graphResult.segmentCount,
+          },
+        };
+        rawResponse = graphResult.explainRawResponse;
+        finishedAt = graphResult.finishedAt;
+      } else {
+        const chainResult = await this.langchain.analyzeDocument({
+          providerCode,
+          model,
+          format: document.format.code,
+          filename: document.filename,
+          content,
+        });
+        analysis = chainResult.analysis;
+        rawResponse = chainResult.rawResponse;
+        finishedAt = chainResult.finishedAt;
+      }
 
       // Persist as a Process + Analysis using the "checked" relation form
       const created = await this.prisma.analysis.create({
@@ -94,7 +131,7 @@ export class AnalysesService {
               fromTime: startedAt,
               toTime: finishedAt,
               status: 'completed',
-              result: analysis as object,
+              result: analysis,
               response: rawResponse,
             },
           },

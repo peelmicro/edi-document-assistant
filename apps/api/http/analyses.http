@@ -54,3 +54,48 @@ Content-Type: application/json
   "providerCode": "openai",
   "model": "gpt-4.1-mini"
 }
+
+### --- LangGraph mode (mode=graph) ---
+### These run the multi-step agent workflow (parse → classify → explain[type] → suggest)
+### instead of the single-prompt chain. The persisted result is the same DocumentAnalysis
+### shape, plus a `_graph` debug block with the classification and parse stats.
+
+### Graph: EDIFACT purchase order with Anthropic
+POST http://localhost:3001/documents/DOC-2026-04-000001/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "anthropic",
+  "model": "claude-haiku-4-5-20251001",
+  "mode": "graph"
+}
+
+### Graph: XML invoice with Anthropic
+POST http://localhost:3001/documents/DOC-2026-04-000002/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "anthropic",
+  "model": "claude-haiku-4-5-20251001",
+  "mode": "graph"
+}
+
+### Graph: JSON despatch advice with Google
+POST http://localhost:3001/documents/DOC-2026-04-000003/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "google",
+  "model": "gemini-2.5-flash",
+  "mode": "graph"
+}
+
+### Graph: CSV product catalog with OpenAI
+POST http://localhost:3001/documents/DOC-2026-04-000004/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "openai",
+  "model": "gpt-4.1-mini",
+  "mode": "graph"
+}
