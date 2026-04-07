@@ -1,0 +1,17 @@
+### Seed all reference data
+POST http://localhost:3001/seed
+
+### Seed AI providers only
+POST http://localhost:3001/seed/ai-providers
+
+### Seed formats only
+POST http://localhost:3001/seed/formats
+
+### Seed documents only
+POST http://localhost:3001/seed/documents
+
+### Seed analyses only
+POST http://localhost:3001/seed/analyses
+
+### Seed comparisons only
+POST http://localhost:3001/seed/comparisons

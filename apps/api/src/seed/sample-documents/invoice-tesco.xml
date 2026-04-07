@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+  <ID>INV-2026-04-0042</ID>
+  <IssueDate>2026-04-05</IssueDate>
+  <DueDate>2026-05-05</DueDate>
+  <InvoiceTypeCode>380</InvoiceTypeCode>
+  <DocumentCurrencyCode>GBP</DocumentCurrencyCode>
+  <OrderReference>
+    <ID>PO-TESCO-2026-03-998</ID>
+  </OrderReference>
+  <AccountingSupplierParty>
+    <Party>
+      <PartyName><Name>Fresh Produce Ltd</Name></PartyName>
+      <PartyTaxScheme><CompanyID>GB123456789</CompanyID></PartyTaxScheme>
+    </Party>
+  </AccountingSupplierParty>
+  <AccountingCustomerParty>
+    <Party>
+      <PartyName><Name>Tesco Stores Ltd</Name></PartyName>
+      <PartyTaxScheme><CompanyID>GB220430231</CompanyID></PartyTaxScheme>
+    </Party>
+  </AccountingCustomerParty>
+  <PaymentTerms>
+    <Note>Net 30 days</Note>
+  </PaymentTerms>
+  <TaxTotal>
+    <TaxAmount currencyID="GBP">240.00</TaxAmount>
+    <TaxSubtotal>
+      <TaxableAmount currencyID="GBP">1200.00</TaxableAmount>
+      <TaxAmount currencyID="GBP">240.00</TaxAmount>
+      <TaxCategory><Percent>20</Percent></TaxCategory>
+    </TaxSubtotal>
+  </TaxTotal>
+  <LegalMonetaryTotal>
+    <LineExtensionAmount currencyID="GBP">1200.00</LineExtensionAmount>
+    <TaxExclusiveAmount currencyID="GBP">1200.00</TaxExclusiveAmount>
+    <TaxInclusiveAmount currencyID="GBP">1440.00</TaxInclusiveAmount>
+    <PayableAmount currencyID="GBP">1440.00</PayableAmount>
+  </LegalMonetaryTotal>
+  <InvoiceLine>
+    <ID>1</ID>
+    <InvoicedQuantity unitCode="EA">400</InvoicedQuantity>
+    <LineExtensionAmount currencyID="GBP">800.00</LineExtensionAmount>
+    <Item><Name>Organic Bananas 1kg</Name></Item>
+    <Price><PriceAmount currencyID="GBP">2.00</PriceAmount></Price>
+  </InvoiceLine>
+  <InvoiceLine>
+    <ID>2</ID>
+    <InvoicedQuantity unitCode="EA">200</InvoicedQuantity>
+    <LineExtensionAmount currencyID="GBP">400.00</LineExtensionAmount>
+    <Item><Name>Organic Apples 1kg</Name></Item>
+    <Price><PriceAmount currencyID="GBP">2.00</PriceAmount></Price>
+  </InvoiceLine>
+</Invoice>

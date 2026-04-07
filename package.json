@@ -2,6 +2,9 @@
   "name": "edi-document-assistant",
   "private": true,
   "workspaces": ["apps/*"],
+  "devDependencies": {
+    "prisma": "^6.5.0"
+  },
   "scripts": {
     "dev": "bun run --filter '*' dev",
     "api": "cd apps/api && bun run start:dev",
@@ -17,10 +20,11 @@
     "dc:logs:pg": "docker compose logs -f postgres",
     "dc:logs:minio": "docker compose logs -f minio",
     "dc:all": "docker compose up -d",
-    "db:generate": "cd apps/api && bunx prisma generate",
-    "db:migrate": "cd apps/api && bunx prisma migrate dev",
+    "db:generate": "bunx prisma generate --schema=apps/api/prisma/schema.prisma",
+    "db:migrate": "bunx prisma migrate dev --schema=apps/api/prisma/schema.prisma",
+    "db:migrate:deploy": "bunx prisma migrate deploy --schema=apps/api/prisma/schema.prisma",
     "db:seed": "cd apps/api && bun run seed",
     "db:setup": "bun run db:migrate && bun run db:seed",
-    "db:studio": "cd apps/api && bunx prisma studio"
+    "db:studio": "bunx prisma studio --schema=apps/api/prisma/schema.prisma"
   }
 }

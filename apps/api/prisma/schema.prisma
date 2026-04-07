@@ -1,0 +1,140 @@
+// EDI Document Assistant — Prisma Schema
+// Run: bunx prisma migrate dev
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Per-prefix monthly counters used to generate human-readable codes
+// (e.g., DOC-2026-04-000001). Updated atomically via upsert + increment.
+model CodeSequence {
+  id           String   @id @default(uuid()) @db.Uuid
+  prefix       String   @db.VarChar(20)
+  yearMonth    String   @map("year_month") @db.VarChar(7)
+  lastSequence Int      @default(0) @map("last_sequence")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([prefix, yearMonth])
+  @@map("code_sequences")
+}
+
+// AI provider configurations with available models
+model AiProvider {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique @db.VarChar(20)
+  name      String   @db.VarChar(100)
+  models    Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  processes Process[]
+
+  @@map("ai_providers")
+}
+
+// Supported document formats (EDIFACT, XML, JSON, CSV)
+model Format {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique @db.VarChar(20)
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  documents Document[]
+
+  @@map("formats")
+}
+
+// Uploaded documents with AI-generated metadata
+model Document {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(20)
+  filename    String   @db.VarChar(200)
+  formatId    String   @map("format_id") @db.Uuid
+  tags        Json     @default("[]")
+  description String?  @db.Text
+  storagePath String   @map("storage_path") @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  format        Format        @relation(fields: [formatId], references: [id])
+  analyses      Analysis[]
+  comparisonsA  Comparison[]  @relation("ComparisonDocumentA")
+  comparisonsB  Comparison[]  @relation("ComparisonDocumentB")
+
+  @@map("documents")
+}
+
+// AI processing records — tracks each AI call with timing, cost, and results
+model Process {
+  id            String    @id @default(uuid()) @db.Uuid
+  aiProviderId  String    @map("ai_provider_id") @db.Uuid
+  fromTime      DateTime  @map("from_time")
+  toTime        DateTime? @map("to_time")
+  cost          Decimal   @default(0.00) @db.Decimal(10, 2)
+  status        String    @db.VarChar(20)
+  result        Json?
+  response      String?   @db.Text
+  errorMessage  String?   @map("error_message") @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  aiProvider          AiProvider   @relation(fields: [aiProviderId], references: [id])
+  analyses            Analysis[]
+  comparisons         Comparison[]
+  messages            Message[]    @relation("MessageProcess")
+  followUpMessages    Message[]    @relation("MessageParentProcess")
+
+  @@map("processes")
+}
+
+// Links a document to a process — one document can be analyzed multiple times
+model Analysis {
+  id         String   @id @default(uuid()) @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  processId  String   @map("process_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  document Document @relation(fields: [documentId], references: [id])
+  process  Process  @relation(fields: [processId], references: [id])
+
+  @@map("analyses")
+}
+
+// Links two documents to a process — for side-by-side comparison
+model Comparison {
+  id          String   @id @default(uuid()) @db.Uuid
+  documentAId String   @map("document_a_id") @db.Uuid
+  documentBId String   @map("document_b_id") @db.Uuid
+  processId   String   @map("process_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  documentA Document @relation("ComparisonDocumentA", fields: [documentAId], references: [id])
+  documentB Document @relation("ComparisonDocumentB", fields: [documentBId], references: [id])
+  process   Process  @relation(fields: [processId], references: [id])
+
+  @@map("comparisons")
+}
+
+// Chat messages for follow-up questions about documents
+model Message {
+  id              String   @id @default(uuid()) @db.Uuid
+  processId       String   @map("process_id") @db.Uuid
+  parentProcessId String?  @map("parent_process_id") @db.Uuid
+  role            String   @db.VarChar(20)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  process       Process  @relation("MessageProcess", fields: [processId], references: [id])
+  parentProcess Process? @relation("MessageParentProcess", fields: [parentProcessId], references: [id])
+
+  @@map("messages")
+}

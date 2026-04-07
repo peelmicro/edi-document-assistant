@@ -1,0 +1,14 @@
+SKU,EAN,ProductName,Category,Brand,UnitPrice,Currency,UnitOfMeasure,PackSize,VATRate,Origin
+ALD-001,4006381333900,Whole Milk 1L,Dairy,Milfina,0.95,EUR,L,1,7,DE
+ALD-002,4006381333917,Semi-Skimmed Milk 1L,Dairy,Milfina,0.95,EUR,L,1,7,DE
+ALD-003,4006381333924,Greek Yogurt 500g,Dairy,Milfina,1.49,EUR,G,500,7,DE
+ALD-101,4006381444100,Sourdough Bread 500g,Bakery,Goldähren,1.29,EUR,G,500,7,DE
+ALD-102,4006381444117,Wholemeal Bread 750g,Bakery,Goldähren,1.59,EUR,G,750,7,DE
+ALD-201,4006381555200,Free-Range Eggs 12pk,Eggs,Lovenest,2.79,EUR,EA,12,7,DE
+ALD-202,4006381555217,Organic Eggs 6pk,Eggs,Lovenest,2.49,EUR,EA,6,7,DE
+ALD-301,4006381666300,Chicken Breast 500g,Meat,Meine Metzgerei,4.99,EUR,G,500,7,DE
+ALD-302,4006381666317,Beef Mince 500g,Meat,Meine Metzgerei,5.49,EUR,G,500,7,DE
+ALD-401,4006381777400,Roma Tomatoes 1kg,Produce,Natur Aktiv,1.99,EUR,KG,1,7,ES
+ALD-402,4006381777417,Iceberg Lettuce 1pc,Produce,Natur Aktiv,0.99,EUR,EA,1,7,ES
+ALD-501,4006381888500,Cola 1.5L,Beverages,River,0.49,EUR,L,1.5,19,DE
+ALD-502,4006381888517,Sparkling Water 1.5L,Beverages,Quellbrunn,0.29,EUR,L,1.5,19,DE

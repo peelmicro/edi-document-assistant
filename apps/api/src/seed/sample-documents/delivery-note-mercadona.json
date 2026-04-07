@@ -1,0 +1,58 @@
+{
+  "documentType": "DespatchAdvice",
+  "documentNumber": "DN-2026-04-00187",
+  "issueDate": "2026-04-06T08:30:00Z",
+  "buyer": {
+    "name": "Mercadona S.A.",
+    "gln": "8412345000005",
+    "vatNumber": "ESA46103834"
+  },
+  "supplier": {
+    "name": "Bodegas Rioja Alta",
+    "gln": "8420987654321",
+    "vatNumber": "ESB26012345"
+  },
+  "shipFrom": {
+    "name": "Bodegas Rioja Alta - Almacen Logroño",
+    "address": "Calle del Vino 12, 26200 Haro, La Rioja, Spain"
+  },
+  "shipTo": {
+    "name": "Mercadona CD Sant Sadurní",
+    "address": "Pol. Ind. Can Pelegri, 08770 Sant Sadurní d'Anoia, Spain"
+  },
+  "purchaseOrderRef": "PO-MERCADONA-2026-03-7421",
+  "carrier": "Transportes Iberia SL",
+  "trackingNumber": "TI-2026-04-998877",
+  "expectedDeliveryDate": "2026-04-08",
+  "items": [
+    {
+      "lineNumber": 1,
+      "ean": "8412345112233",
+      "name": "Crianza Rioja DOC 75cl",
+      "quantityShipped": 1200,
+      "unit": "BOTTLE",
+      "lotNumber": "LOT-2024-A",
+      "expiryDate": "2030-12-31"
+    },
+    {
+      "lineNumber": 2,
+      "ean": "8412345112240",
+      "name": "Reserva Rioja DOC 75cl",
+      "quantityShipped": 600,
+      "unit": "BOTTLE",
+      "lotNumber": "LOT-2022-B",
+      "expiryDate": "2032-12-31"
+    },
+    {
+      "lineNumber": 3,
+      "ean": "8412345112257",
+      "name": "Gran Reserva Rioja DOC 75cl",
+      "quantityShipped": 240,
+      "unit": "BOTTLE",
+      "lotNumber": "LOT-2018-C",
+      "expiryDate": "2035-12-31"
+    }
+  ],
+  "totalPackages": 168,
+  "totalGrossWeightKg": 2380.5
+}
