@@ -1,0 +1,26 @@
+### Stream EDIFACT purchase order analysis with Anthropic
+GET http://localhost:3001/documents/DOC-2026-04-000001/analyses/stream?providerCode=anthropic&model=claude-haiku-4-5-20251001
+Accept: text/event-stream
+
+### Stream EDIFACT purchase order analysis with OpenAI
+GET http://localhost:3001/documents/DOC-2026-04-000001/analyses/stream?providerCode=openai&model=gpt-4.1-mini
+Accept: text/event-stream
+
+### Stream EDIFACT purchase order analysis with Google
+GET http://localhost:3001/documents/DOC-2026-04-000001/analyses/stream?providerCode=google&model=gemini-2.5-flash
+Accept: text/event-stream
+
+### Stream XML invoice analysis with Anthropic
+GET http://localhost:3001/documents/DOC-2026-04-000002/analyses/stream?providerCode=anthropic&model=claude-haiku-4-5-20251001
+Accept: text/event-stream
+
+### Stream JSON despatch advice with Google
+GET http://localhost:3001/documents/DOC-2026-04-000003/analyses/stream?providerCode=google&model=gemini-2.5-flash
+Accept: text/event-stream
+
+### Stream CSV product catalog with OpenAI
+GET http://localhost:3001/documents/DOC-2026-04-000004/analyses/stream?providerCode=openai&model=gpt-4.1-mini
+Accept: text/event-stream
+
+### --- curl alternative (one-liner that prints events as they arrive) ---
+# curl -N "http://localhost:3001/documents/DOC-2026-04-000001/analyses/stream?providerCode=anthropic&model=claude-haiku-4-5-20251001"

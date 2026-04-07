@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
-import { LangChainService } from '../langchain/langchain.service';
+import { LangChainService, type StreamEvent } from '../langchain/langchain.service';
 import type { ProviderCode } from '../langchain/providers.factory';
 
 export interface AnalyzeDocumentRequest {
@@ -9,6 +9,19 @@ export interface AnalyzeDocumentRequest {
   providerCode: ProviderCode;
   model: string;
 }
+
+/**
+ * Higher-level event the SSE controller forwards to the client.
+ *
+ * Adds a `started` event up-front (so the UI can render a header before the
+ * first token arrives) and an `analysis-saved` event after the DB write so
+ * the UI can navigate to the persisted analysis row.
+ */
+export type AnalysisStreamEvent =
+  | { type: 'started'; documentCode: string; providerCode: ProviderCode; model: string }
+  | { type: 'token'; token: string }
+  | { type: 'analysis-saved'; analysisId: string; processId: string }
+  | { type: 'error'; message: string };
 
 @Injectable()
 export class AnalysesService {
@@ -122,6 +135,131 @@ export class AnalysesService {
 
       return failed;
     }
+  }
+
+  /**
+   * Streaming variant of `analyze`.
+   *
+   * Yields `AnalysisStreamEvent`s the SSE controller forwards to the client:
+   *   1. `started` once we've validated the inputs and loaded the document
+   *   2. one `token` per LLM chunk
+   *   3. `analysis-saved` after the parsed result has been persisted as a
+   *      `Process` + `Analysis` row
+   *   4. `error` if anything fails (also persisted as a failed Process so the
+   *      UI can later show the cause)
+   *
+   * `abortSignal` is forwarded to LangChain so closing the SSE connection
+   * cancels the in-flight LLM call instead of burning tokens.
+   */
+  async *streamAnalyze(
+    request: AnalyzeDocumentRequest,
+    abortSignal?: AbortSignal,
+  ): AsyncGenerator<AnalysisStreamEvent> {
+    const { documentCode, providerCode, model } = request;
+
+    const document = await this.prisma.document.findUnique({
+      where: { code: documentCode },
+      include: { format: true },
+    });
+    if (!document) {
+      yield { type: 'error', message: `Document not found: ${documentCode}` };
+      return;
+    }
+
+    const provider = await this.prisma.aiProvider.findUnique({
+      where: { code: providerCode },
+    });
+    if (!provider) {
+      yield { type: 'error', message: `AI provider not found: ${providerCode}` };
+      return;
+    }
+
+    const knownModels = (provider.models as string[]) ?? [];
+    if (!knownModels.includes(model)) {
+      yield {
+        type: 'error',
+        message: `Model "${model}" is not registered for provider "${providerCode}". Known: ${knownModels.join(', ')}`,
+      };
+      return;
+    }
+
+    yield { type: 'started', documentCode, providerCode, model };
+
+    const fileBuffer = await this.storage.download(document.storagePath);
+    const content = fileBuffer.toString('utf-8');
+
+    let finalEvent: StreamEvent | null = null;
+
+    try {
+      for await (const event of this.langchain.streamAnalyzeDocument(
+        {
+          providerCode,
+          model,
+          format: document.format.code,
+          filename: document.filename,
+          content,
+        },
+        abortSignal,
+      )) {
+        if (event.type === 'token') {
+          yield { type: 'token', token: event.token };
+        } else {
+          finalEvent = event;
+        }
+      }
+    } catch (error) {
+      const message = (error as Error).message;
+      this.logger.error(
+        `Streaming analysis failed for ${documentCode} via ${providerCode}/${model}: ${message}`,
+      );
+      finalEvent = { type: 'error', message };
+    }
+
+    if (!finalEvent) {
+      yield { type: 'error', message: 'Stream ended without a final event' };
+      return;
+    }
+
+    if (finalEvent.type === 'error') {
+      // Persist the failure so the user can see what happened later
+      const failedAt = new Date();
+      const failed = await this.prisma.analysis.create({
+        data: {
+          document: { connect: { id: document.id } },
+          process: {
+            create: {
+              aiProvider: { connect: { id: provider.id } },
+              fromTime: failedAt,
+              toTime: failedAt,
+              status: 'failed',
+              errorMessage: finalEvent.message,
+            },
+          },
+        },
+      });
+      yield { type: 'analysis-saved', analysisId: failed.id, processId: failed.processId };
+      yield { type: 'error', message: finalEvent.message };
+      return;
+    }
+
+    // finalEvent.type === 'done' — persist the successful run
+    const created = await this.prisma.analysis.create({
+      data: {
+        document: { connect: { id: document.id } },
+        process: {
+          create: {
+            aiProvider: { connect: { id: provider.id } },
+            fromTime: finalEvent.startedAt,
+            toTime: finalEvent.finishedAt,
+            status: 'completed',
+            result: finalEvent.analysis as object,
+            response: finalEvent.rawResponse,
+          },
+        },
+      },
+    });
+
+    yield { type: 'analysis-saved', analysisId: created.id, processId: created.processId };
   }
 
   async findAllForDocument(documentCode: string) {
