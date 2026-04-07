@@ -4,7 +4,9 @@ import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
 import { StorageModule } from './storage/storage.module';
+import { LangChainModule } from './langchain/langchain.module';
 import { DocumentsModule } from './documents/documents.module';
+import { AnalysesModule } from './analyses/analyses.module';
 import { SeedModule } from './seed/seed.module';
 
 @Module({
@@ -16,7 +18,9 @@ import { SeedModule } from './seed/seed.module';
     PrismaModule,
     CommonModule,
     StorageModule,
+    LangChainModule,
     DocumentsModule,
+    AnalysesModule,
     SeedModule,
   ],
   controllers: [AppController],

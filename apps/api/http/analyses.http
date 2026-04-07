@@ -1,0 +1,56 @@
+### List analyses for a document
+GET http://localhost:3001/documents/DOC-2026-04-000001/analyses
+
+### Analyze the EDIFACT purchase order with Anthropic Claude
+POST http://localhost:3001/documents/DOC-2026-04-000001/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "anthropic",
+  "model": "claude-haiku-4-5-20251001"
+}
+
+### Analyze the EDIFACT purchase order with OpenAI
+POST http://localhost:3001/documents/DOC-2026-04-000001/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "openai",
+  "model": "gpt-4.1-mini"
+}
+
+### Analyze the EDIFACT purchase order with Google Gemini
+POST http://localhost:3001/documents/DOC-2026-04-000001/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "google",
+  "model": "gemini-2.5-flash"
+}
+
+### Analyze the XML invoice with Anthropic
+POST http://localhost:3001/documents/DOC-2026-04-000002/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "anthropic",
+  "model": "claude-haiku-4-5-20251001"
+}
+
+### Analyze the JSON despatch advice with Google
+POST http://localhost:3001/documents/DOC-2026-04-000003/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "google",
+  "model": "gemini-2.5-flash"
+}
+
+### Analyze the CSV product catalog with OpenAI
+POST http://localhost:3001/documents/DOC-2026-04-000004/analyses
+Content-Type: application/json
+
+{
+  "providerCode": "openai",
+  "model": "gpt-4.1-mini"
+}

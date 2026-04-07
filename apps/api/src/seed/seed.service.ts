@@ -64,17 +64,17 @@ export class SeedService {
       {
         code: 'openai',
         name: 'OpenAI',
-        models: ['gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano'],
+        models: ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano'],
       },
       {
         code: 'anthropic',
         name: 'Anthropic',
-        models: ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5'],
+        models: ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
       },
       {
         code: 'google',
         name: 'Google',
-        models: ['gemini-3.1-pro', 'gemini-3-flash', 'gemini-3.1-flash-lite'],
+        models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash-lite'],
       },
     ];
 
