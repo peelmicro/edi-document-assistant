@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
+import { StorageModule } from './storage/storage.module';
+import { DocumentsModule } from './documents/documents.module';
 import { SeedModule } from './seed/seed.module';
 
 @Module({
@@ -13,6 +15,8 @@ import { SeedModule } from './seed/seed.module';
     }),
     PrismaModule,
     CommonModule,
+    StorageModule,
+    DocumentsModule,
     SeedModule,
   ],
   controllers: [AppController],

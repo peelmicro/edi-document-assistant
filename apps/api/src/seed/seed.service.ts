@@ -1,6 +1,16 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CodeGeneratorService } from '../common/code-generator.service';
+import { StorageService } from '../storage/storage.service';
+
+const CONTENT_TYPE_BY_EXT: Record<string, string> = {
+  edi: 'application/edifact',
+  xml: 'application/xml',
+  json: 'application/json',
+  csv: 'text/csv',
+};
 
 /**
  * Seeds the database with reference data and demo content.
@@ -15,6 +25,7 @@ export class SeedService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly codeGenerator: CodeGeneratorService,
+    private readonly storage: StorageService,
   ) {}
 
   async seedAll() {
@@ -139,6 +150,15 @@ export class SeedService {
       }
 
       const code = await this.codeGenerator.generate('DOC');
+
+      // Read the sample file from disk and upload it to MinIO
+      const filePath = join(__dirname, 'sample-documents', sample.filename);
+      const fileBuffer = await readFile(filePath);
+      const ext = sample.filename.split('.').pop() ?? '';
+      const contentType = CONTENT_TYPE_BY_EXT[ext] ?? 'application/octet-stream';
+      const objectKey = `seed/${code}-${sample.filename}`;
+      await this.storage.uploadBuffer(objectKey, fileBuffer, contentType);
+
       const doc = await this.prisma.document.create({
         data: {
           code,
@@ -146,8 +166,7 @@ export class SeedService {
           formatId: format.id,
           tags: sample.tags,
           description: sample.description,
-          // Placeholder — Phase 3 will upload the file to MinIO and set the real key
-          storagePath: `documents/seed/${sample.filename}`,
+          storagePath: objectKey,
         },
       });
       created.push(doc);
@@ -284,7 +303,7 @@ export class SeedService {
           process: { aiProviderId: provider.id },
         },
         include: {
-          document: { select: { code: true, filename: true } },
+          document: { select: { code: true, filename: true, storagePath: true } },
           process: { include: { aiProvider: { select: { code: true, name: true } } } },
         },
       });
@@ -311,7 +330,7 @@ export class SeedService {
           },
         },
         include: {
-          document: { select: { code: true, filename: true } },
+          document: { select: { code: true, filename: true, storagePath: true } },
           process: { include: { aiProvider: { select: { code: true, name: true } } } },
         },
       });
@@ -416,8 +435,8 @@ export class SeedService {
           documentBId: item.documentB.id,
         },
         include: {
-          documentA: { select: { code: true, filename: true } },
-          documentB: { select: { code: true, filename: true } },
+          documentA: { select: { code: true, filename: true, storagePath: true } },
+          documentB: { select: { code: true, filename: true, storagePath: true } },
           process: { include: { aiProvider: { select: { code: true, name: true } } } },
         },
       });
@@ -445,8 +464,8 @@ export class SeedService {
           },
         },
         include: {
-          documentA: { select: { code: true, filename: true } },
-          documentB: { select: { code: true, filename: true } },
+          documentA: { select: { code: true, filename: true, storagePath: true } },
+          documentB: { select: { code: true, filename: true, storagePath: true } },
           process: { include: { aiProvider: { select: { code: true, name: true } } } },
         },
       });

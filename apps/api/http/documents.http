@@ -1,0 +1,20 @@
+### List all documents
+GET http://localhost:3001/documents
+
+### Get a single document by code
+GET http://localhost:3001/documents/DOC-2026-04-000001
+
+### Get raw document content (streamed from MinIO)
+GET http://localhost:3001/documents/DOC-2026-04-000001/content
+
+### Get raw XML invoice content
+GET http://localhost:3001/documents/DOC-2026-04-000002/content
+
+### Get raw JSON despatch advice content
+GET http://localhost:3001/documents/DOC-2026-04-000003/content
+
+### Get raw CSV catalog content
+GET http://localhost:3001/documents/DOC-2026-04-000004/content
+
+### Get a presigned download URL (valid 1 hour)
+GET http://localhost:3001/documents/DOC-2026-04-000001/download-url
