@@ -1,10 +1,19 @@
-### List all documents
+### List all documents (default page=1, pageSize=20)
 GET http://localhost:3001/documents
 
-### Get a single document by code
+### List documents filtered by format
+GET http://localhost:3001/documents?formatCode=edifact
+
+### List documents with simple text search
+GET http://localhost:3001/documents?search=carrefour
+
+### List documents with pagination
+GET http://localhost:3001/documents?page=1&pageSize=2
+
+### Get a single document by code (now includes analyses + messages)
 GET http://localhost:3001/documents/DOC-2026-04-000001
 
-### Get raw document content (streamed from MinIO)
+### Get raw EDIFACT purchase order content
 GET http://localhost:3001/documents/DOC-2026-04-000001/content
 
 ### Get raw XML invoice content
@@ -18,3 +27,13 @@ GET http://localhost:3001/documents/DOC-2026-04-000004/content
 
 ### Get a presigned download URL (valid 1 hour)
 GET http://localhost:3001/documents/DOC-2026-04-000001/download-url
+
+### --- Upload a new document (multipart) ---
+### Use the file picker in REST Client; or run the curl command below.
+### curl -F "file=@./apps/api/src/seed/sample-documents/purchase-order-carrefour.edi" \
+###      -F "description=Demo upload" \
+###      -F "tags=demo,upload" \
+###      http://localhost:3001/documents
+
+### Delete a document (removes the MinIO object too)
+### DELETE http://localhost:3001/documents/DOC-2026-04-000099

@@ -33,6 +33,7 @@
         "@nestjs/schematics": "^11.0.0",
         "@nestjs/testing": "^11.0.0",
         "@types/express": "^5.0.0",
+        "@types/multer": "^2.1.0",
         "@types/node": "^22.0.0",
         "prisma": "^6.5.0",
         "ts-node": "^10.9.2",
@@ -379,6 +380,8 @@
     "@types/http-errors": ["@types/http-errors@2.0.5", "", {}, "sha512-r8Tayk8HJnX0FztbZN7oVqGccWgw98T/0neJphO91KkmOzug1KkofZURD4UaD5uH8AqcFLfdPErnBod0u71/qg=="],
 
     "@types/json-schema": ["@types/json-schema@7.0.15", "", {}, "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="],
+
+    "@types/multer": ["@types/multer@2.1.0", "", { "dependencies": { "@types/express": "*" } }, "sha512-zYZb0+nJhOHtPpGDb3vqPjwpdeGlGC157VpkqNQL+UU2qwoacoQ7MpsAmUptI/0Oa127X32JzWDqQVEXp2RcIA=="],
 
     "@types/node": ["@types/node@22.19.17", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q=="],
 

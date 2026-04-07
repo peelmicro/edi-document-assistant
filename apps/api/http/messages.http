@@ -1,0 +1,27 @@
+### List the chat thread for an analysis
+### Replace <PARENT_PROCESS_ID> with the processId of any analysis on the document
+### (you can grab one from GET /documents/DOC-2026-04-000001)
+GET http://localhost:3001/documents/DOC-2026-04-000001/messages?parentProcessId=<PARENT_PROCESS_ID>
+
+### Ask a follow-up question about a document
+### Same parentProcessId — the assistant will use that analysis as context.
+POST http://localhost:3001/documents/DOC-2026-04-000001/messages
+Content-Type: application/json
+
+{
+  "parentProcessId": "<PARENT_PROCESS_ID>",
+  "providerCode": "anthropic",
+  "model": "claude-haiku-4-5-20251001",
+  "question": "What is the total quantity ordered across all line items?"
+}
+
+### A second follow-up — the model gets the prior conversation as history
+POST http://localhost:3001/documents/DOC-2026-04-000001/messages
+Content-Type: application/json
+
+{
+  "parentProcessId": "<PARENT_PROCESS_ID>",
+  "providerCode": "anthropic",
+  "model": "claude-haiku-4-5-20251001",
+  "question": "Which of those products has the highest unit price?"
+}

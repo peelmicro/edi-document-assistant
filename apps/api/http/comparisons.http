@@ -1,0 +1,29 @@
+### List all comparisons (seed + any new ones)
+GET http://localhost:3001/comparisons
+
+### Cross-document comparison: PO vs invoice
+POST http://localhost:3001/comparisons
+Content-Type: application/json
+
+{
+  "type": "cross_document",
+  "documentACode": "DOC-2026-04-000001",
+  "documentBCode": "DOC-2026-04-000002",
+  "providerCode": "anthropic",
+  "model": "claude-haiku-4-5-20251001"
+}
+
+### Cross-provider comparison: same EDIFACT PO analysed by Anthropic vs OpenAI, judged by Google
+POST http://localhost:3001/comparisons
+Content-Type: application/json
+
+{
+  "type": "cross_provider",
+  "documentCode": "DOC-2026-04-000001",
+  "providerACode": "anthropic",
+  "modelA": "claude-haiku-4-5-20251001",
+  "providerBCode": "openai",
+  "modelB": "gpt-4.1-mini",
+  "judgeProviderCode": "google",
+  "judgeModel": "gemini-2.5-flash"
+}

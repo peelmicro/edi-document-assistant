@@ -1,4 +1,16 @@
-import { Controller, Get, Param, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { DocumentsService } from './documents.service';
 
@@ -9,13 +21,62 @@ const CONTENT_TYPE_BY_FORMAT: Record<string, string> = {
   csv: 'text/csv',
 };
 
+interface UploadBody {
+  formatCode?: string;
+  description?: string;
+  /** Comma-separated list of tags. Multipart bodies don't natively carry arrays. */
+  tags?: string;
+}
+
 @Controller('documents')
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
   @Get()
-  async findAll() {
-    return this.documentsService.findAll();
+  async findAll(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('formatCode') formatCode?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.documentsService.findAll({
+      page: page ? Number(page) : undefined,
+      pageSize: pageSize ? Number(pageSize) : undefined,
+      formatCode,
+      search,
+    });
+  }
+
+  /**
+   * Multipart upload endpoint.
+   *
+   * Form field name: `file` (the document binary)
+   * Optional form fields: `formatCode`, `description`, `tags` (comma-separated)
+   */
+  @Post()
+  @UseInterceptors(FileInterceptor('file'))
+  async upload(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: UploadBody,
+  ) {
+    if (!file) {
+      throw new Error('No file uploaded — send the file under the form field name "file".');
+    }
+    const tags = body.tags
+      ? body.tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0)
+      : [];
+    return this.documentsService.create({
+      filename: file.originalname,
+      buffer: file.buffer,
+      formatCode: body.formatCode,
+      description: body.description,
+      tags,
+    });
+  }
+
+  @Delete(':code')
+  async remove(@Param('code') code: string) {
+    return this.documentsService.remove(code);
   }
 
   @Get(':code')

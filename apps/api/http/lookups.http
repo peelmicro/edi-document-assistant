@@ -1,0 +1,5 @@
+### List all supported document formats
+GET http://localhost:3001/formats
+
+### List all configured AI providers (with their models)
+GET http://localhost:3001/ai-providers

@@ -8,6 +8,10 @@ import { LangChainModule } from './langchain/langchain.module';
 import { LangGraphModule } from './langgraph/langgraph.module';
 import { DocumentsModule } from './documents/documents.module';
 import { AnalysesModule } from './analyses/analyses.module';
+import { MessagesModule } from './messages/messages.module';
+import { ComparisonsModule } from './comparisons/comparisons.module';
+import { FormatsModule } from './formats/formats.module';
+import { AiProvidersModule } from './ai-providers/ai-providers.module';
 import { SeedModule } from './seed/seed.module';
 
 @Module({
@@ -23,6 +27,10 @@ import { SeedModule } from './seed/seed.module';
     LangGraphModule,
     DocumentsModule,
     AnalysesModule,
+    MessagesModule,
+    ComparisonsModule,
+    FormatsModule,
+    AiProvidersModule,
     SeedModule,
   ],
   controllers: [AppController],
