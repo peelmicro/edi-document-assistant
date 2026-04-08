@@ -13,12 +13,23 @@ import type {
 /**
  * Centralised API client.
  *
- * Reads the API base URL from `NEXT_PUBLIC_API_URL` so the same code runs
- * on the server (during SSR) and in the browser. The variable lives in
- * the root `.env` (Phase 1) and defaults to localhost for dev.
+ * The browser bundle inlines `NEXT_PUBLIC_API_URL` at build time and uses
+ * it to reach the API on the host (e.g. http://localhost:3001).
+ *
+ * Server Components, however, run *inside* the web container under Docker,
+ * where "localhost" means the web container itself — not the API. For SSR
+ * we therefore prefer `INTERNAL_API_URL` (e.g. http://api:3001 in compose),
+ * falling back to `NEXT_PUBLIC_API_URL` for local `bun run dev`.
+ *
+ * `typeof window === 'undefined'` is the standard Next.js SSR vs CSR check.
  */
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const isServer = typeof window === 'undefined';
+
+export const API_BASE_URL = isServer
+  ? process.env.INTERNAL_API_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    'http://localhost:3001'
+  : process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 class ApiError extends Error {
   constructor(public readonly status: number, message: string) {
