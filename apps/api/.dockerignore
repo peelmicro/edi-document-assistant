@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+.git
+.gitignore
+.vscode
+*.log
+coverage
+http
+prisma/migrations/migration_lock.toml

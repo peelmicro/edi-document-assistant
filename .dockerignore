@@ -1,0 +1,29 @@
+# Build context lives at the monorepo root for both API and Web Dockerfiles
+# (because bun.lock is at the root). This file keeps the context small.
+
+# Per-app caches and build outputs
+apps/api/node_modules
+apps/api/dist
+apps/web/node_modules
+apps/web/.next
+apps/web/out
+node_modules
+
+# Local state
+.env
+.env.local
+.env.*.local
+
+# VCS / IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Logs and coverage
+*.log
+coverage
+
+# Docker-internal volumes if anyone runs `docker compose up` before this file lands
+postgres_data
+minio_data

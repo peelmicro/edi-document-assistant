@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:16
     container_name: edi-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-edidocassistant}
       POSTGRES_USER: ${POSTGRES_USER:-edi}
@@ -11,7 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edi}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edi} -d ${POSTGRES_DB:-edidocassistant}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -19,6 +20,7 @@ services:
   minio:
     image: minio/minio
     container_name: edi-minio
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
@@ -28,6 +30,51 @@ services:
       - "9001:9001"
     volumes:
       - minio_data:/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: edi-api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # Inside Docker, services reference each other by service name, not localhost
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edi}:${POSTGRES_PASSWORD:-edi123}@postgres:5432/${POSTGRES_DB:-edidocassistant}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-documents}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      LANGCHAIN_TRACING_V2: ${LANGCHAIN_TRACING_V2:-false}
+      LANGCHAIN_API_KEY: ${LANGCHAIN_API_KEY:-}
+      LANGCHAIN_PROJECT: ${LANGCHAIN_PROJECT:-edi-document-assistant}
+      API_PORT: 3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Next.js inlines NEXT_PUBLIC_* env vars at build time, not runtime.
+        # The browser runs on the host, so it reaches the API on the published
+        # host port (localhost:3001), not the Docker network name.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    container_name: edi-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
 
 volumes:
   postgres_data:
