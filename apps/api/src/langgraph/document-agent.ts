@@ -26,14 +26,12 @@ async function parseNode(
   state: typeof DocumentAgentState.State,
 ): Promise<Partial<typeof DocumentAgentState.State>> {
   const { content, format } = state;
-  let segmentCount = 0;
-  if (format === 'edifact') {
-    segmentCount = content.split("'").filter((s) => s.trim().length > 0).length;
-  } else if (format === 'csv') {
-    segmentCount = content.split('\n').filter((line) => line.trim().length > 0).length;
-  } else {
-    segmentCount = 1; // XML / JSON treated as a single document
-  }
+  const segmentCount =
+    format === 'edifact'
+      ? content.split("'").filter((s) => s.trim().length > 0).length
+      : format === 'csv'
+        ? content.split('\n').filter((line) => line.trim().length > 0).length
+        : 1; // XML / JSON treated as a single document
   logger.debug(`PARSE: format=${format} length=${content.length} segments=${segmentCount}`);
   return { contentLength: content.length, segmentCount };
 }
