@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
+import { HttpLoggerMiddleware } from './common/http-logger.middleware';
 import { StorageModule } from './storage/storage.module';
 import { LangChainModule } from './langchain/langchain.module';
 import { LangGraphModule } from './langgraph/langgraph.module';
@@ -35,4 +36,8 @@ import { SeedModule } from './seed/seed.module';
   ],
   controllers: [AppController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(HttpLoggerMiddleware).forRoutes('*');
+  }
+}

@@ -5,6 +5,7 @@ import { StorageService } from '../storage/storage.service';
 import { ProvidersFactory, type ProviderCode } from '../langchain/providers.factory';
 import { chatPrompt } from '../langchain/prompts/chat.prompt';
 import { buildTracingConfig } from '../langchain/tracing.helper';
+import { decodeDocumentBuffer } from '../common/document-encoding';
 
 export interface AskQuestionRequest {
   documentCode: string;
@@ -64,6 +65,10 @@ export class MessagesService {
       throw new BadRequestException('Question is required');
     }
 
+    this.logger.log(
+      `Chat: question received for ${documentCode} via ${providerCode}/${model} (${question.length} chars)`,
+    );
+
     const document = await this.prisma.document.findUnique({
       where: { code: documentCode },
       include: { format: true },
@@ -106,9 +111,10 @@ export class MessagesService {
       return m.role === 'user' ? [new HumanMessage(text)] : [new AIMessage(text)];
     });
 
-    // Load the document content from MinIO
+    // Load the document content from MinIO and decode using the right
+    // character set (Latin-1 for European EDIFACT, UTF-8 for everything else)
     const fileBuffer = await this.storage.download(document.storagePath);
-    const content = fileBuffer.toString('utf-8');
+    const content = decodeDocumentBuffer(fileBuffer, document.format.code);
 
     // Build the LLM and the prompt messages
     const llm = this.providersFactory.createModel({ providerCode, model, streaming: false });
@@ -149,6 +155,14 @@ export class MessagesService {
     }
     const finishedAt = new Date();
 
+    if (status === 'completed') {
+      this.logger.log(
+        `Chat: answered ${documentCode} via ${providerCode}/${model} in ${
+          finishedAt.getTime() - startedAt.getTime()
+        }ms (${answerText.length} chars)`,
+      );
+    }
+
     // Persist BOTH messages (user + assistant) so the thread is complete.
     // Done in a single Prisma transaction so a failure mid-write doesn't
     // leave the thread in a half-saved state.
@@ -160,6 +174,8 @@ export class MessagesService {
           process: {
             create: {
               aiProvider: { connect: { id: provider.id } },
+              model,
+              mode: 'chat',
               fromTime: startedAt,
               toTime: startedAt,
               status: 'completed',
@@ -175,6 +191,8 @@ export class MessagesService {
           process: {
             create: {
               aiProvider: { connect: { id: provider.id } },
+              model,
+              mode: 'chat',
               fromTime: startedAt,
               toTime: finishedAt,
               status,

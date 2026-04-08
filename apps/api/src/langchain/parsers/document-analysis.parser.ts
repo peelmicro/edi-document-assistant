@@ -22,49 +22,53 @@ export const documentAnalysisSchema = z.object({
     ),
   parties: z
     .object({
-      buyer: z.string().optional().describe('Buyer name and/or identifier (e.g. GLN).'),
-      supplier: z.string().optional().describe('Supplier name and/or identifier.'),
-      shipFrom: z.string().optional(),
-      shipTo: z.string().optional(),
+      buyer: z.string().nullish().describe('Buyer name and/or identifier (e.g. GLN).'),
+      supplier: z.string().nullish().describe('Supplier name and/or identifier.'),
+      shipFrom: z.string().nullish(),
+      shipTo: z.string().nullish(),
     })
-    .optional(),
+    .nullish(),
   references: z
     .object({
-      documentNumber: z.string().optional().describe('The document\'s own number/code.'),
+      documentNumber: z.string().nullish().describe('The document\'s own number/code.'),
       purchaseOrderRef: z
         .string()
-        .optional()
+        .nullish()
         .describe('Linked PO reference, if this is an invoice or despatch advice.'),
-      invoiceNumber: z.string().optional(),
-      trackingNumber: z.string().optional(),
+      invoiceNumber: z.string().nullish(),
+      trackingNumber: z.string().nullish(),
     })
-    .optional(),
+    .nullish(),
   dates: z
     .object({
-      issueDate: z.string().optional(),
-      dueDate: z.string().optional(),
-      deliveryDate: z.string().optional(),
+      issueDate: z.string().nullish(),
+      dueDate: z.string().nullish(),
+      deliveryDate: z.string().nullish(),
     })
-    .optional(),
+    .nullish(),
   totals: z
     .object({
-      currency: z.string().optional(),
-      subtotal: z.number().optional(),
-      tax: z.number().optional(),
-      total: z.number().optional(),
-      lineItemCount: z.number().optional(),
-      totalQuantity: z.number().optional(),
+      currency: z.string().nullish(),
+      subtotal: z.number().nullish(),
+      tax: z.number().nullish(),
+      total: z.number().nullish(),
+      lineItemCount: z.number().nullish(),
+      totalQuantity: z.number().nullish(),
     })
-    .optional(),
+    .nullish(),
   lineItems: z
     .array(
+      // Use `.nullish()` (= optional + nullable) instead of `.optional()`
+      // because some models (notably OpenAI gpt-4.1-nano) emit explicit
+      // `null` for missing fields rather than omitting the key. Strict
+      // `.optional()` would reject those payloads.
       z.object({
-        sku: z.string().optional(),
-        ean: z.string().optional(),
-        name: z.string().optional(),
-        quantity: z.number().optional(),
-        unitPrice: z.number().optional(),
-        unitOfMeasure: z.string().optional(),
+        sku: z.string().nullish(),
+        ean: z.string().nullish(),
+        name: z.string().nullish(),
+        quantity: z.number().nullish(),
+        unitPrice: z.number().nullish(),
+        unitOfMeasure: z.string().nullish(),
       }),
     )
     .optional()

@@ -196,10 +196,17 @@ export class SeedService {
     const docByFilename = new Map(documents.map((d) => [d.filename, d]));
     const providerByCode = new Map(providers.map((p) => [p.code, p]));
 
-    const plan: Array<{ filename: string; providerCode: string; result: object; response: string }> = [
+    const plan: Array<{
+      filename: string;
+      providerCode: string;
+      model: string;
+      result: object;
+      response: string;
+    }> = [
       {
         filename: 'purchase-order-carrefour.edi',
         providerCode: 'anthropic',
+        model: 'claude-haiku-4-5-20251001',
         result: {
           documentType: 'purchase_order',
           buyer: 'Carrefour (GLN 5412345678908)',
@@ -218,6 +225,7 @@ export class SeedService {
       {
         filename: 'purchase-order-carrefour.edi',
         providerCode: 'openai',
+        model: 'gpt-4.1-mini',
         result: {
           documentType: 'purchase_order',
           buyer: 'Carrefour',
@@ -236,6 +244,7 @@ export class SeedService {
       {
         filename: 'invoice-tesco.xml',
         providerCode: 'anthropic',
+        model: 'claude-haiku-4-5-20251001',
         result: {
           documentType: 'invoice',
           invoiceNumber: 'INV-2026-04-0042',
@@ -255,6 +264,7 @@ export class SeedService {
       {
         filename: 'delivery-note-mercadona.json',
         providerCode: 'google',
+        model: 'gemini-2.5-flash',
         result: {
           documentType: 'despatch_advice',
           documentNumber: 'DN-2026-04-00187',
@@ -273,6 +283,7 @@ export class SeedService {
       {
         filename: 'product-catalog-aldi.csv',
         providerCode: 'openai',
+        model: 'gpt-4.1-mini',
         result: {
           documentType: 'product_catalog',
           supplier: 'Aldi',
@@ -320,6 +331,8 @@ export class SeedService {
           process: {
             create: {
               aiProvider: { connect: { id: provider.id } },
+              model: item.model,
+              mode: 'chain',
               fromTime,
               toTime,
               cost: 0.01,
@@ -454,6 +467,8 @@ export class SeedService {
           process: {
             create: {
               aiProvider: { connect: { id: item.provider.id } },
+              model: 'claude-haiku-4-5-20251001',
+              mode: 'compare',
               fromTime,
               toTime,
               cost: 0.02,

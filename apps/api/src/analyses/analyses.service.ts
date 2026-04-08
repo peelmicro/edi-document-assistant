@@ -4,6 +4,7 @@ import { StorageService } from '../storage/storage.service';
 import { LangChainService, type StreamEvent } from '../langchain/langchain.service';
 import { LangGraphService } from '../langgraph/langgraph.service';
 import type { ProviderCode } from '../langchain/providers.factory';
+import { decodeDocumentBuffer } from '../common/document-encoding';
 
 export type AnalysisMode = 'chain' | 'graph';
 
@@ -54,6 +55,10 @@ export class AnalysesService {
   async analyze(request: AnalyzeDocumentRequest) {
     const { documentCode, providerCode, model, mode = 'chain' } = request;
 
+    this.logger.log(
+      `Analysis: started for ${documentCode} via ${providerCode}/${model} mode=${mode}`,
+    );
+
     const document = await this.prisma.document.findUnique({
       where: { code: documentCode },
       include: { format: true },
@@ -77,7 +82,7 @@ export class AnalysesService {
     }
 
     const fileBuffer = await this.storage.download(document.storagePath);
-    const content = fileBuffer.toString('utf-8');
+    const content = decodeDocumentBuffer(fileBuffer, document.format.code);
 
     const startedAt = new Date();
     try {
@@ -143,6 +148,8 @@ export class AnalysesService {
           process: {
             create: {
               aiProvider: { connect: { id: provider.id } },
+              model,
+              mode,
               fromTime: startedAt,
               toTime: finishedAt,
               status: 'completed',
@@ -172,6 +179,8 @@ export class AnalysesService {
           process: {
             create: {
               aiProvider: { connect: { id: provider.id } },
+              model,
+              mode,
               fromTime: startedAt,
               toTime: failedAt,
               status: 'failed',
@@ -235,10 +244,14 @@ export class AnalysesService {
       return;
     }
 
+    this.logger.log(
+      `Stream: started for ${documentCode} via ${providerCode}/${model}`,
+    );
+
     yield { type: 'started', documentCode, providerCode, model };
 
     const fileBuffer = await this.storage.download(document.storagePath);
-    const content = fileBuffer.toString('utf-8');
+    const content = decodeDocumentBuffer(fileBuffer, document.format.code);
 
     let finalEvent: StreamEvent | null = null;
 
@@ -289,6 +302,8 @@ export class AnalysesService {
           process: {
             create: {
               aiProvider: { connect: { id: provider.id } },
+              model,
+              mode: 'stream',
               fromTime: failedAt,
               toTime: failedAt,
               status: 'failed',
@@ -309,6 +324,8 @@ export class AnalysesService {
         process: {
           create: {
             aiProvider: { connect: { id: provider.id } },
+            model,
+            mode: 'stream',
             fromTime: finalEvent.startedAt,
             toTime: finalEvent.finishedAt,
             status: 'completed',

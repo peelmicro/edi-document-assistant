@@ -87,8 +87,11 @@ export class DocumentsController {
   @Get(':code/content')
   async getContent(@Param('code') code: string, @Res() res: Response) {
     const { content, filename, format } = await this.documentsService.getContent(code);
-    const contentType = CONTENT_TYPE_BY_FORMAT[format] ?? 'application/octet-stream';
-    res.setHeader('Content-Type', contentType);
+    const baseContentType = CONTENT_TYPE_BY_FORMAT[format] ?? 'application/octet-stream';
+    // The service already decoded the original encoding (e.g. ISO 8859-1
+    // for European EDIFACT) to a UTF-8 string, so we always announce
+    // charset=utf-8 to the browser.
+    res.setHeader('Content-Type', `${baseContentType}; charset=utf-8`);
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     res.send(content);
   }

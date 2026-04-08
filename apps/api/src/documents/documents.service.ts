@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { CodeGeneratorService } from '../common/code-generator.service';
+import { decodeDocumentBuffer } from '../common/document-encoding';
 
 const CONTENT_TYPE_BY_EXT: Record<string, string> = {
   edi: 'application/edifact',
@@ -67,7 +68,10 @@ export class DocumentsService {
     const [items, total] = await Promise.all([
       this.prisma.document.findMany({
         where,
-        orderBy: { code: 'asc' },
+        // Newest first so the home page's "Recent documents" actually shows
+        // the most recently uploaded, and the documents list page defaults
+        // to the standard newest-first ordering.
+        orderBy: { createdAt: 'desc' },
         skip,
         take: pageSize,
         include: { format: { select: { code: true, name: true } } },
@@ -174,9 +178,19 @@ export class DocumentsService {
     return { code, deleted: true };
   }
 
-  async getContent(code: string): Promise<{ content: Buffer; filename: string; format: string }> {
+  /**
+   * Returns the document body as a UTF-8 string, decoded from whatever
+   * encoding the file actually uses (auto-detected via the EDIFACT UNB
+   * header for .edi files; UTF-8 for everything else).
+   *
+   * Once we hand the string back to the controller, it can serve the
+   * response with `charset=utf-8` and the browser will render it
+   * correctly even if the original file was Latin-1.
+   */
+  async getContent(code: string): Promise<{ content: string; filename: string; format: string }> {
     const doc = await this.findByCode(code);
-    const content = await this.storage.download(doc.storagePath);
+    const buffer = await this.storage.download(doc.storagePath);
+    const content = decodeDocumentBuffer(buffer, doc.format.code);
     return { content, filename: doc.filename, format: doc.format.code };
   }
 

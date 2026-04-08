@@ -6,6 +6,7 @@ import { ProvidersFactory, type ProviderCode } from '../langchain/providers.fact
 import { comparePrompt } from '../langchain/prompts/compare.prompt';
 import { comparisonParser } from '../langchain/parsers/comparison.parser';
 import { buildTracingConfig } from '../langchain/tracing.helper';
+import { decodeDocumentBuffer } from '../common/document-encoding';
 
 export interface CrossDocumentRequest {
   type: 'cross_document';
@@ -66,6 +67,10 @@ export class ComparisonsService {
    * row whose `Process.result` is the structured diff.
    */
   private async crossDocument(req: CrossDocumentRequest) {
+    this.logger.log(
+      `Comparison: cross_document started for ${req.documentACode} vs ${req.documentBCode} via ${req.providerCode}/${req.model}`,
+    );
+
     const [docA, docB] = await Promise.all([
       this.prisma.document.findUnique({ where: { code: req.documentACode }, include: { format: true } }),
       this.prisma.document.findUnique({ where: { code: req.documentBCode }, include: { format: true } }),
@@ -79,8 +84,8 @@ export class ComparisonsService {
       this.storage.download(docA.storagePath),
       this.storage.download(docB.storagePath),
     ]);
-    const payloadA = bufA.toString('utf-8');
-    const payloadB = bufB.toString('utf-8');
+    const payloadA = decodeDocumentBuffer(bufA, docA.format.code);
+    const payloadB = decodeDocumentBuffer(bufB, docB.format.code);
 
     const result = await this.runCompareCall({
       providerCode: req.providerCode,
@@ -102,6 +107,8 @@ export class ComparisonsService {
         process: {
           create: {
             aiProvider: { connect: { id: provider.id } },
+            model: req.model,
+            mode: 'compare',
             fromTime: result.startedAt,
             toTime: result.finishedAt,
             status: 'completed',
@@ -127,6 +134,10 @@ export class ComparisonsService {
    * appear in the document detail page like any other analysis.
    */
   private async crossProvider(req: CrossProviderRequest) {
+    this.logger.log(
+      `Comparison: cross_provider started for ${req.documentCode} (${req.providerACode}/${req.modelA} vs ${req.providerBCode}/${req.modelB}, judged by ${req.judgeProviderCode}/${req.judgeModel})`,
+    );
+
     const document = await this.prisma.document.findUnique({
       where: { code: req.documentCode },
       include: { format: true },
@@ -138,7 +149,7 @@ export class ComparisonsService {
     const judge = await this.requireProvider(req.judgeProviderCode, req.judgeModel);
 
     const fileBuffer = await this.storage.download(document.storagePath);
-    const content = fileBuffer.toString('utf-8');
+    const content = decodeDocumentBuffer(fileBuffer, document.format.code);
 
     // Run the two underlying analyses in parallel
     const [resultA, resultB] = await Promise.all([
@@ -199,6 +210,8 @@ export class ComparisonsService {
         process: {
           create: {
             aiProvider: { connect: { id: judge.id } },
+            model: req.judgeModel,
+            mode: 'compare',
             fromTime: compareResult.startedAt,
             toTime: compareResult.finishedAt,
             status: 'completed',
