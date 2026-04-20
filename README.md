@@ -6,6 +6,13 @@ Built as a portfolio project demonstrating NestJS + Next.js App Router + LangCha
 
 ---
 
+## Demo
+
+![Demo](docs/demo.gif)
+*End-to-end flow: document detail → streaming analysis → follow-up chat → cross-provider comparison*
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -52,6 +59,9 @@ This starts:
 - **Web** on port **3000** (http://localhost:3000)
 
 Open http://localhost:3000 — you should see the home page with 6 sample documents.
+
+![Home](docs/home.png)
+*Home page — 4 seeded documents covering all 4 supported formats (EDIFACT, XML, JSON, CSV).*
 
 > **Note:** `NEXT_PUBLIC_API_URL` is inlined into the Next.js bundle at build time. If you need a custom API URL (e.g. a remote host), set it in `.env` before running `docker compose up --build`.
 
@@ -138,6 +148,12 @@ Three analysis modes are available from the document detail page:
 | **Stream** | Same as Chain but via SSE — tokens appear in the UI as they arrive (typewriter effect) |
 | **Graph** | LangGraph `StateGraph`: Parse → Classify → Explain (type-specific prompt) → Suggest |
 
+![Upload](docs/upload.png)
+*Upload form — drag a file, add optional description and tags, the format is auto-detected from the extension.*
+
+![Document detail](docs/document-detail.png)
+*Document detail — raw content on the left, analysis runs and chat on the right.*
+
 ### LangGraph Agent Workflow
 
 The Graph mode runs a multi-step agent that:
@@ -162,13 +178,22 @@ The `GET /documents/:code/analyses/stream` endpoint sends four event types:
 
 Closing the browser tab fires Express's `req.on('close')`, which triggers an `AbortController` that cancels the in-flight LLM call — saving tokens.
 
+![Streaming](docs/streaming.png)
+*Mid-stream capture — tokens arrive via SSE and render with a typewriter effect.*
+
 ### Multi-Provider Support
 
 Every analysis, chat, and comparison call accepts a `providerCode` + `model` pair. Adding a new provider requires one extra `case` in `providers.factory.ts` and installing the matching `@langchain/<provider>` package — the chain and graph code does not change.
 
+![Providers](docs/providers.png)
+*Providers page — Anthropic, OpenAI, and Google with the models each API key unlocks.*
+
 ### Chat (Follow-up Q&A)
 
 After an analysis, open the chat panel to ask questions about the document. The `MessagesService` uses a `MessagesPlaceholder` in the LangChain prompt to inject the full conversation history, so each reply has full context. Both the user turn and assistant reply are persisted in a single Prisma transaction.
+
+![Chat](docs/chat.png)
+*Follow-up chat — full prior turns are passed to the LLM on each reply.*
 
 ### Cross-Document & Cross-Provider Comparison
 
@@ -181,6 +206,9 @@ Two comparison modes:
 
 Results show `agreement`, `differences` (side-by-side values for each field), and a `recommendation` paragraph.
 
+![Comparison](docs/comparison.png)
+*Side-by-side comparison — agreement, differences, and a judge-model recommendation.*
+
 ### LangSmith Observability
 
 Every LLM call is traced with:
@@ -189,6 +217,16 @@ Every LLM call is traced with:
 - `metadata` — `{ model, documentCode, documentFormat }`
 
 This makes all runs filterable in LangSmith by mode, format, provider, or model. Enable by setting `LANGCHAIN_TRACING_V2=true` and `LANGCHAIN_API_KEY` in `.env`.
+
+![LangSmith](docs/langsmith.png)
+*LangSmith trace — each chain/graph run is filterable by mode, format, provider, and model.*
+
+### Object Storage (MinIO)
+
+Uploaded documents and the seeded samples are persisted in a MinIO bucket at `seed/DOC-YYYY-MM-NNNNNN-<filename>`. The console at http://localhost:9001 (minioadmin / minioadmin) lets you verify the objects without touching the API.
+
+![MinIO](docs/minio.png)
+*MinIO Console — the `documents` bucket with the seeded EDI files.*
 
 ### EDIFACT Character Set Detection
 
